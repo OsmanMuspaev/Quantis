@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// Получить тесты по айди курса
+// GetCourseTests returns all tests for a given course.
 func GetCourseTests(token string, courseID int) ([]Test, error) {
 	url := fmt.Sprintf("%s/courses/%d/tests", baseURL, courseID)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -28,7 +28,7 @@ func GetCourseTests(token string, courseID int) ([]Test, error) {
 	return data.Tests, nil
 }
 
-// Создать тест
+// CreateTest creates a new test in a course.
 func CreateTest(token string, courseID int, title string) (int, error) {
 	payload := map[string]string{"title": title}
 	body, _ := json.Marshal(payload)
@@ -52,7 +52,7 @@ func CreateTest(token string, courseID int, title string) (int, error) {
 	return res.ID, nil
 }
 
-// Удалить тест
+// DeleteTest removes a test by ID.
 func DeleteTest(token string, testID int) error {
 	url := fmt.Sprintf("%s/tests/%d", baseURL, testID)
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -70,7 +70,7 @@ func DeleteTest(token string, testID int) error {
 	return nil
 }
 
-// Получить статус теста
+// GetTestStatus returns whether a test is active.
 func GetTestStatus(token string, courseID, testID int) (bool, error) {
 	url := fmt.Sprintf("%s/courses/%d/tests/%d/status", baseURL, courseID, testID)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -91,7 +91,7 @@ func GetTestStatus(token string, courseID, testID int) (bool, error) {
 	return res.IsActive, nil
 }
 
-// Активировать/Деактивировать тест
+// UpdateTestActivation toggles a test's active state.
 func UpdateTestActivation(token string, courseID, testID int, isActive bool) error {
 	payload := map[string]bool{"is_active": isActive}
 	body, _ := json.Marshal(payload)
@@ -112,7 +112,7 @@ func UpdateTestActivation(token string, courseID, testID int, isActive bool) err
 	return nil
 }
 
-// Добавление вопроса в тест
+// AddQuestionToTest adds a question to a test.
 func AddQuestionToTest(token string, testID, questionID int) error {
 	url := fmt.Sprintf("%s/tests/%d/questions/%d", baseURL, testID, questionID)
 	req, _ := http.NewRequest("POST", url, nil)
@@ -130,7 +130,7 @@ func AddQuestionToTest(token string, testID, questionID int) error {
 	return nil
 }
 
-// Удаление вопроса с теста
+// RemoveQuestionFromTest removes a question from a test.
 func RemoveQuestionFromTest(token string, testID, questionID int) error {
 	url := fmt.Sprintf("%s/tests/%d/questions/%d", baseURL, testID, questionID)
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -148,7 +148,7 @@ func RemoveQuestionFromTest(token string, testID, questionID int) error {
 	return nil
 }
 
-// Изменение порядка вопросов в тесте
+// ReorderQuestions changes the order of questions in a test.
 func ReorderQuestions(token string, testID int, questionIDs []int) error {
 	payload := map[string][]int{"question_ids": questionIDs}
 	body, _ := json.Marshal(payload)

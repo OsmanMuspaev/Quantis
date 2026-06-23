@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	// "bytes"
 	"encoding/json"
 	"io"
 	"log"
@@ -17,44 +16,43 @@ type UserProfleResponse struct {
 }
 
 func GetUserProfileClientHandler(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, status string) {
-	if status == "authorized" {
-		url := "http://tg_nginx/users/info?chat_id=" + strconv.FormatInt(msg.Chat.ID, 10)
+	if status != "authorized" {
+		m := tgbotapi.NewMessage(msg.Chat.ID, "Please authorize first via /start")
+		bot.Send(m)
+		return
+	}
 
-		req, err := http.NewRequest("GET", url, nil)
-		if err != nil {
-			log.Printf("Ошибка создания запроса: %v\n", err)
-			return
-		}
+	url := "http://tg_nginx/users/info?chat_id=" + strconv.FormatInt(msg.Chat.ID, 10)
 
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Printf("Ошибка запроса: %v\n", err)
-			return
-		}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Printf("Failed to create request: %v", err)
+		return
+	}
 
-		defer resp.Body.Close()
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Request failed: %v", err)
+		return
+	}
+	defer resp.Body.Close()
 
-		var response UserInfoResponse
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Failed to read response: %v", err)
+		return
+	}
 
-		body, _ := io.ReadAll(resp.Body)
+	var response UserInfoResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		log.Printf("Failed to parse JSON: %v", err)
+		return
+	}
 
-		if err := json.Unmarshal(body, &response); err != nil {
-			log.Printf("Ошибка парсинга JSON: %v\n", err)
-			return
-		}
-		var mess string = "Username: " + response.FullName + " , user id: " + response.UserID
-
-		m := tgbotapi.NewMessage(msg.Chat.ID, mess)
-		_, err = bot.Send(m)
-		if err != nil {
-			log.Printf("Error github n: %v", err)
-		}
-	} else {
-		m := tgbotapi.NewMessage(msg.Chat.ID, "You are already authorized!")
-		_, err := bot.Send(m)
-		if err != nil {
-			log.Printf("Error sending messge: %v", err)
-		}
+	text := "Username: " + response.FullName + " | User ID: " + response.UserID
+	m := tgbotapi.NewMessage(msg.Chat.ID, text)
+	if _, err := bot.Send(m); err != nil {
+		log.Printf("Failed to send message: %v", err)
 	}
 }

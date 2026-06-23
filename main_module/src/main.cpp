@@ -8,13 +8,12 @@ int main() {
     const char* env_conn = std::getenv("DB_CONNINFO");
 
     if (!env_conn) {
-        std::cerr << "CRITICAL ERROR: DB_CONNINFO not found in environment!" << std::endl;
+        std::cerr << "CRITICAL ERROR: DB_CONNINFO not found in environment\n";
         return 1; 
     }
 
     DB db(env_conn);
 
-    // Проверка активации
     CROW_ROUTE(app, "/health")([] {
         return "OK";
     });

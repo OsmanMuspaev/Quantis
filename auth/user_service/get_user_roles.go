@@ -2,7 +2,6 @@ package user_service
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"auth/storage"
@@ -13,41 +12,38 @@ import (
 )
 
 type RolesResponse struct {
-	Roles []string `bson:"roles"`
+	Roles []string `bson:"roles" json:"roles"`
 }
 
 type GetRolesRequest struct {
 	UserId string `json:"user_id"`
 }
 
-func GetUserRoles(user_id_str string) (roles RolesResponse, err error) {
-	var roles_col RolesResponse
+func GetUserRoles(userIDStr string) (RolesResponse, error) {
+	var roles RolesResponse
 
-	user_id, err := primitive.ObjectIDFromHex(user_id_str)
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
 	if err != nil {
-		log.Println("1")
-		return roles_col, err
+		return roles, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	findOptions := options.FindOne()
 	findOptions.SetProjection(bson.M{
 		"roles": 1,
-		"_id":  0, 
+		"_id":   0,
 	})
 
 	err = storage.GetUserCollection().FindOne(
-		ctx, 
-		bson.M{"_id": user_id}, 
-		findOptions, 
-	).Decode(&roles_col)
-	
+		ctx,
+		bson.M{"_id": userID},
+		findOptions,
+	).Decode(&roles)
+
 	if err != nil {
-		log.Println("2")
-		return roles_col, err
+		return roles, err
 	}
-	return roles_col, nil
-	
+	return roles, nil
 }

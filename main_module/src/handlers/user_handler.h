@@ -12,7 +12,7 @@ inline void registerUserRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, std::string targetUserId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         bool isOwner = (ctx.userId == targetUserId);
@@ -44,7 +44,7 @@ inline void registerUserRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         PermissionRule readRule{
@@ -74,7 +74,7 @@ inline void registerUserRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, std::string targetUserId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         crow::json::wvalue cmd;
@@ -98,7 +98,7 @@ inline void registerUserRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, std::string targetUserId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         bool isSelf = (ctx.userId == targetUserId);
@@ -143,7 +143,7 @@ inline void registerUserRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, std::string targetUserId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         PermissionRule readRule{
@@ -177,7 +177,7 @@ inline void registerUserRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, std::string targetUserId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         PermissionRule readRule{
@@ -217,7 +217,7 @@ inline void registerUserRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, std::string targetUserId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         PermissionRule readRule{
@@ -251,7 +251,7 @@ inline void registerUserRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, std::string targetUserId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         if (ctx.userId == targetUserId) {

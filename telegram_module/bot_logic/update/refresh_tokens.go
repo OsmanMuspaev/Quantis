@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
-	"io"
 
 	"bot_logic/storage"
 )
@@ -28,73 +28,69 @@ func RefreshUsersTokens() {
 			iter := storage.AuthRedis.Scan(ctx, 0, "*", 0).Iterator()
 
 			for iter.Next(ctx) {
-				chat_id := iter.Val()
-				if chat_id == "ids" {
+				chatID := iter.Val()
+				if chatID == "ids" {
 					continue
 				}
 
-				url := "http://auth:8081/refresh"
-				id, _ := strconv.Atoi(chat_id)
-				userData, err := storage.AuthRedis.HGetAll(ctx, chat_id).Result()
+				id, _ := strconv.Atoi(chatID)
+				userData, err := storage.AuthRedis.HGetAll(ctx, chatID).Result()
 				if err != nil {
-					log.Printf("[ERROR] Failed to HGETALL for chatID %s: %v", chat_id, err)
+					log.Printf("Failed to HGETALL for chatID %s: %v", chatID, err)
 					continue
 				}
 
 				status := userData["status"]
-
 				if status != "authorized" {
-					log.Printf("[DEBUG] Skipping chatID %s: status is '%s' (need 'authorized')", chat_id, status)
 					continue
 				}
 
-				refresh_token, err := storage.GetRefreshToken(id)
+				refreshToken, err := storage.GetRefreshToken(id)
 				if err != nil {
-					log.Printf("Status update failed: %v", err)
+					log.Printf("Failed to get refresh token: %v", err)
 					continue
 				}
 
-				data := map[string]string{"refresh_token": refresh_token}
+				data := map[string]string{"refresh_token": refreshToken}
 				jsonData, err := json.Marshal(data)
 				if err != nil {
-					log.Printf("Ошибка создания JSON: %v\n", err)
+					log.Printf("Failed to create JSON: %v", err)
 					continue
 				}
 
-				req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+				req, err := http.NewRequest("POST", "http://auth:8081/refresh", bytes.NewBuffer(jsonData))
 				if err != nil {
-					log.Printf("Ошибка создания запроса: %v\n", err)
+					log.Printf("Failed to create request: %v", err)
 					continue
 				}
 				req.Header.Set("Content-Type", "application/json")
 
-				client := &http.Client{}
+				client := &http.Client{Timeout: 10 * time.Second}
 				resp, err := client.Do(req)
 				if err != nil {
-					log.Printf("Ошибка запроса: %v\n", err)
+					log.Printf("Request failed: %v", err)
 					continue
 				}
-
-				defer resp.Body.Close()
 
 				bodyBytes, err := io.ReadAll(resp.Body)
+				resp.Body.Close()
 				if err != nil {
-					log.Printf("Error reading response body: %v", err)
+					log.Printf("Failed to read response: %v", err)
 					continue
 				}
-
-				log.Print(string(bodyBytes))
 
 				var refreshResp RefreshResponseStruct
 				if err := json.Unmarshal(bodyBytes, &refreshResp); err != nil {
-					log.Printf("Error decoding JSON: %v", err)
+					log.Printf("Failed to decode JSON: %v", err)
 					continue
 				}
 
-				err = storage.AuthRedis.HSet(ctx, chat_id, "access_token", refreshResp.AccessToken, "refresh_token", refreshResp.RefreshToken).Err()
+				err = storage.AuthRedis.HSet(ctx, chatID,
+					"access_token", refreshResp.AccessToken,
+					"refresh_token", refreshResp.RefreshToken,
+				).Err()
 				if err != nil {
-					log.Printf("Error: %v", err)
-					continue
+					log.Printf("Redis error: %v", err)
 				}
 			}
 		}

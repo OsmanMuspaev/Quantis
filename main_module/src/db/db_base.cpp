@@ -1,28 +1,27 @@
 #include "db.h"
 
-// Конструктор
 DB::DB(const std::string& conninfo) : conninfo(conninfo), conn(nullptr) {
     ensureConnection();
 }
 
-// Деструктор
 DB::~DB() {
     if (conn) {
-        PQfinish((PGconn*)conn);
+        PQfinish(static_cast<PGconn*>(conn));
     }
 }
 
-// Проверка подключения к базе данных
+// Ensures the PostgreSQL connection is alive. Reconnects if the previous connection was lost.
 void DB::ensureConnection() {
-    if (!conn || PQstatus((PGconn*)conn) != CONNECTION_OK) {
-        if (conn) PQfinish((PGconn*)conn);
+    if (!conn || PQstatus(static_cast<PGconn*>(conn)) != CONNECTION_OK) {
+        if (conn) PQfinish(static_cast<PGconn*>(conn));
         
         conn = PQconnectdb(conninfo.c_str());
         
-        if (PQstatus((PGconn*)conn) != CONNECTION_OK) {
-            std::cerr << "DB Connection Error: " << PQerrorMessage((PGconn*)conn) << std::endl;
-        } else {
-            std::cout << "Successfully connected to DB" << std::endl;
+        if (PQstatus(static_cast<PGconn*>(conn)) != CONNECTION_OK) {
+            std::string errMsg = PQerrorMessage(static_cast<PGconn*>(conn));
+            PQfinish(static_cast<PGconn*>(conn));
+            conn = nullptr;
+            throw std::runtime_error("Failed to connect to database: " + errMsg);
         }
     }
 }

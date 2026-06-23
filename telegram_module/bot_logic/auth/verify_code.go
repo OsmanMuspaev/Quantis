@@ -3,9 +3,11 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"bot_logic/storage"
 )
@@ -14,54 +16,44 @@ type VerifyCodeResponse struct {
 	Status string `json:"status"`
 }
 
-func VerifyCode(chat_id int, code string) error {
-	refresh_token, err := storage.GetRefreshToken(chat_id)
+func VerifyCode(chatID int, code string) error {
+	refreshToken, err := storage.GetRefreshToken(chatID)
 	if err != nil {
-		log.Println("Couldn-t find refresh token: ", err.Error())
-		return err
+		return fmt.Errorf("refresh token not found: %v", err)
 	}
-	log.Println(refresh_token)
 
-	url := "http://auth:8081/login/verify"
-
-	body := map[string]string{"code": code, "refresh_token": refresh_token}
-	jsonData, _ := json.Marshal(body)
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	body := map[string]string{"code": code, "refresh_token": refreshToken}
+	jsonData, err := json.Marshal(body)
 	if err != nil {
-		log.Printf("Err request: %v\n", err)
-		return err
+		return fmt.Errorf("failed to marshal request: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", "http://auth:8081/login/verify", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Err response: %v\n", err)
+		log.Printf("VerifyCode request failed: %v", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Error reading response: %v", err)
-		return err
+		return fmt.Errorf("failed to read response: %v", err)
 	}
 
-	var verifyCodeResp VerifyCodeResponse
-	if err := json.Unmarshal(bodyBytes, &verifyCodeResp); err != nil {
-		log.Printf("Error parsing JSON: %v", err)
-		return err
+	var verifyResp VerifyCodeResponse
+	if err := json.Unmarshal(bodyBytes, &verifyResp); err != nil {
+		return fmt.Errorf("failed to parse JSON: %v", err)
 	}
 
-	if verifyCodeResp.Status == "denied" {
-		return http.ErrBodyNotAllowed
-	}
-	if verifyCodeResp.Status == "pending"{
-		log.Println("status pending....")
-	}
-	if verifyCodeResp.Status == "approved"{
-		log.Println("status approved....")
+	if verifyResp.Status == "denied" {
+		return fmt.Errorf("code verification denied")
 	}
 	return nil
 }

@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// Получить данные о пользователе (курсы, оценки, тесты)
+// GetUserData returns aggregated user data (courses, tests, grades).
 func GetUserData(token, targetID string, courses, tests, grades bool) (*UserProfileData, error) {
 	url := fmt.Sprintf("%s/users/%s/data?c=%t&t=%t&g=%t", baseURL, targetID, courses, tests, grades)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -24,7 +24,7 @@ func GetUserData(token, targetID string, courses, tests, grades bool) (*UserProf
 	return &data, nil
 }
 
-// Получить список пользователей
+// GetUserList returns all users.
 func GetUserList(token string) ([]UserInfo, error) {
 	req, _ := http.NewRequest("GET", baseURL+"/users", nil)
 	setAuthHeader(req, token)
@@ -40,8 +40,7 @@ func GetUserList(token string) ([]UserInfo, error) {
 	return list, nil
 }
 
-
-// Получить ФИО пользователя
+// GetUserInfo returns user info by ID.
 func GetUserInfo(token, targetID string) (map[string]any, error) {
 	url := fmt.Sprintf("%s/users/%s", baseURL, targetID)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -64,7 +63,7 @@ func GetUserInfo(token, targetID string) (map[string]any, error) {
 	return res, nil
 }
 
-// Изменить ФИО пользователя
+// UpdateUserFullName updates a user's full name.
 func UpdateUserFullName(token, targetID, newName string) error {
 	payload := map[string]string{"full_name": newName}
 	body, _ := json.Marshal(payload)
@@ -81,7 +80,7 @@ func UpdateUserFullName(token, targetID, newName string) error {
 	return nil
 }
 
-// Получить роли пользователя
+// GetUserRoles returns the roles assigned to a user.
 func GetUserRoles(token, targetID string) ([]string, error) {
 	url := fmt.Sprintf("%s/users/%s/roles", baseURL, targetID)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -98,7 +97,7 @@ func GetUserRoles(token, targetID string) ([]string, error) {
 	return res.Roles, nil
 }
 
-// Изменить роли пользователя
+// UpdateUserRoles updates the roles assigned to a user.
 func UpdateUserRoles(token, targetID string, roles []string) error {
 	payload := map[string][]string{"roles": roles}
 	body, _ := json.Marshal(payload)
@@ -119,7 +118,7 @@ func UpdateUserRoles(token, targetID string, roles []string) error {
 	return nil
 }
 
-// Получить статус пользователя (заблокирован/разблокирован)
+// GetUserBlockStatus returns whether a user is blocked.
 func GetUserBlockStatus(token, targetID string) (bool, error) {
 	url := fmt.Sprintf("%s/users/%s/block-status", baseURL, targetID)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -142,7 +141,7 @@ func GetUserBlockStatus(token, targetID string) (bool, error) {
 	return res.IsBlocked, nil
 }
 
-// Заблокировать/Разблокировать пользователя
+// SetUserBlockStatus blocks or unblocks a user.
 func SetUserBlockStatus(token, targetID string, isBlocked bool) error {
 	payload := map[string]bool{"is_blocked": isBlocked}
 	body, _ := json.Marshal(payload)

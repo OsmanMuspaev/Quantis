@@ -1,6 +1,5 @@
 package user_service
 
-
 import (
 	"context"
 	"time"
@@ -12,36 +11,36 @@ import (
 )
 
 type UserGetBlockStatus struct {
-	is_blocked bool `bson:"is_blocked"`
+	IsBlocked bool `bson:"is_blocked" json:"is_blocked"`
 }
 
 type UserGetBlockStatusRequest struct {
 	UserId string `json:"user_id"`
 }
 
-func GetUserBlockStatus(user_id_str string) (block_status UserGetBlockStatus, err error) {
+func GetUserBlockStatus(userIDStr string) (UserGetBlockStatus, error) {
 	var status UserGetBlockStatus
-	
-	user_id, _ := primitive.ObjectIDFromHex(user_id_str)
+
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
 	if err != nil {
 		return status, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	findOptions := options.FindOne()
 	findOptions.SetProjection(bson.M{
 		"is_blocked": 1,
-		"_id":  0,
+		"_id":        0,
 	})
 
 	err = storage.GetUserCollection().FindOne(
-		ctx, 
-		bson.M{"_id": user_id}, 
-		findOptions, 
+		ctx,
+		bson.M{"_id": userID},
+		findOptions,
 	).Decode(&status)
-	
+
 	if err != nil {
 		return status, err
 	}

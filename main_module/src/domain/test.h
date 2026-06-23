@@ -3,11 +3,11 @@
 #include <vector>
 
 struct Test {
-    int id;
-    int course_id;
+    int id = 0;
+    int course_id = 0;
     std::string title;
-    bool is_active;
-    bool is_deleted;
+    bool is_active = false;
+    bool is_deleted = false;
 };
 
 struct UserAnswer {

@@ -2,8 +2,8 @@
 #include <crow.h>
 #include "jwt.h"
 
-// Проверка JWT
-
+// Extracts and validates the JWT from the request.
+// Returns 200 on success, 401 on invalid token, 403 if user is blocked.
 inline int authGuard(
     const crow::request& req,
     UserContext& ctx
@@ -12,11 +12,11 @@ inline int authGuard(
         ctx = parseAndVerifyJWT(req);
 
         if (ctx.blocked) {
-            return 418;
+            return 403;
         }
 
         return 200;
-    } catch (...) {
+    } catch (const std::exception&) {
         return 401;
     }
 }

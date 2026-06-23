@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// Notification represents a single notification from the main module.
 type Notification struct {
 	ID      int    `json:"id"`
 	Type    string `json:"type"`
@@ -22,71 +23,52 @@ type MainModuleResponse struct {
 	Notifications []Notification `json:"notifications"`
 }
 
-// Функция получения уведомлений
 func fetchUserNotifications(token string) ([]Notification, error) {
-	url := "http://main_module:18080/notification"
-
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", "http://main_module:18080/notification", nil)
 	if err != nil {
-		log.Printf("[ERROR] Failed to create request: %v", err)
 		return nil, err
 	}
-
 	req.Header.Set("Authorization", "Bearer "+token)
 
-	log.Printf("[DEBUG] Fetching notifications from: %s", url)
-
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("[ERROR] Network error reaching main_module: %v", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	log.Printf("[DEBUG] Main module responded with status: %d", resp.StatusCode)
-
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("main module returned non-200 status: %d", resp.StatusCode)
+		return nil, fmt.Errorf("main module returned status %d", resp.StatusCode)
 	}
 
 	var res MainModuleResponse
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		log.Printf("[ERROR] Failed to decode JSON response: %v", err)
 		return nil, err
 	}
-
-	log.Printf("[INFO] Successfully received %d notifications", len(res.Notifications))
 
 	return res.Notifications, nil
 }
 
-// Функция подтверждения получения уведомлений
 func confirmNotifications(token string, ids []int) {
 	if len(ids) == 0 {
-		log.Println("[WARN] Empty IDs array, skipping confirm")
 		return
 	}
-	url := "http://main_module:18080/notification/confirm-tg"
-
-	log.Printf("[DEBUG] Confirming %d notifications: %v", len(ids), ids)
 
 	body, _ := json.Marshal(map[string][]int{"ids": ids})
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	req, _ := http.NewRequest("POST", "http://main_module:18080/notification/confirm-tg", bytes.NewBuffer(body))
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("[ERROR] Confirm request failed: %v", err)
+		log.Printf("Confirm request failed: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	log.Printf("[DEBUG] Confirm response status: %d", resp.StatusCode)
-
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		log.Printf("[ERROR] Confirm failed. Status: %d, Body: %s", resp.StatusCode, string(bodyBytes))
+		log.Printf("Confirm failed (status %d): %s", resp.StatusCode, string(bodyBytes))
 	}
 }

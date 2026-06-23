@@ -1,15 +1,16 @@
 package handlers
 
-import ( 
-	tgbotapi "gopkg.in/telegram-bot-api.v4"
+import (
 	"log"
+
+	tgbotapi "gopkg.in/telegram-bot-api.v4"
 )
 
 func StartBot(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
-	reply := "Доброго времени суток! Вас приветсвует команда KVARTIRKA 31! Для того, чтобы продолжить, авторизуйтесь: "
+	reply := "Welcome! To continue, please authorize:"
 
-	loginBtn := tgbotapi.NewInlineKeyboardButtonData("🔑 Войти / Авторизоваться", "login")
-		
+	loginBtn := tgbotapi.NewInlineKeyboardButtonData("Login / Authorize", "login")
+
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(loginBtn),
 	)
@@ -18,6 +19,6 @@ func StartBot(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	mesg.ReplyMarkup = keyboard
 
 	if _, err := bot.Send(mesg); err != nil {
-		log.Printf("Ошибка: %v", err)
+		log.Printf("Failed to send start message: %v", err)
 	}
 }

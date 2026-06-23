@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -120,17 +119,19 @@ func getYandexUserInfo(accessToken string) (*YandexUserInfo, error) {
 }
 
 func YandexAuth(code string) (*domain.User, error) {
-    token, _ := ExchangeYandexCodeForToken(code)
+    token, err := ExchangeYandexCodeForToken(code)
+    if err != nil {
+        return nil, err
+    }
 
 	userInfo, err := getYandexUserInfo(token)
 	if err != nil {
 		return nil, err
 	}
 	
-	
     user, err := storage.FindUserByEmail(userInfo.DefaultEmail)
     if err == nil {
-		if user.YandexID == nil || *user.GithubID == "" {
+		if user.YandexID == nil || *user.YandexID == "" {
 			user.YandexID = &userInfo.ID
 			err := storage.UpdateUserYandexID(user.ID, userInfo.ID)
 			if err != nil {
@@ -145,17 +146,14 @@ func YandexAuth(code string) (*domain.User, error) {
     }
 
     if err != mongo.ErrNoDocuments {
-        // реальная ошибка БД
         log.Printf("FindUserByEmail error: %v\n", err)
-
         return nil, err
     }
-
 
     newUser, err := storage.CreateUser(domain.User{
 		Email:             userInfo.DefaultEmail,
 		YandexID:          &userInfo.ID,
-        Name:              "Anonymous" + strconv.FormatInt(143948752, 10),
+        Name:              "User-" + userInfo.ID,
         Roles:             []string{string(domain.RoleStudent)},
         Permissions:       permissions.ResolvePermissions([]string{string(domain.RoleStudent)}),
 		RefreshTokens:     []string{},

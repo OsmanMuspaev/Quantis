@@ -11,7 +11,7 @@ inline void registerCourseRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req){
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto courses = db.getCourses();
@@ -34,7 +34,7 @@ inline void registerCourseRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int courseId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto course = db.getCourseById(courseId);
@@ -53,7 +53,7 @@ inline void registerCourseRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         PermissionRule rule {
@@ -86,7 +86,7 @@ inline void registerCourseRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int courseId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto course = db.getCourseById(courseId);
@@ -123,7 +123,7 @@ inline void registerCourseRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int courseId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto course = db.getCourseById(courseId);
@@ -162,7 +162,7 @@ inline void registerCourseRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int courseId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto json_data = crow::json::load(req.body);
@@ -203,7 +203,7 @@ inline void registerCourseRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int courseId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto json_data = crow::json::load(req.body);
@@ -243,7 +243,7 @@ inline void registerCourseRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int courseId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto course = db.getCourseById(courseId);

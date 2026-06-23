@@ -1,6 +1,5 @@
 #pragma once
 #include "crow.h"
-#include "cpr/cpr.h"
 #include "course_handler.h"
 #include "test_handler.h"
 #include "question_handler.h"
@@ -12,7 +11,7 @@
 #include "../security/access.h"
 #include "../security/auth_guard.h"
 
-
+// Registers all API route handlers on the Crow application.
 inline void registerRoutes(crow::SimpleApp& app, DB& db) {
     registerCourseRoutes(app, db);
     registerTestRoutes(app, db);

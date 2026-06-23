@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"bot_logic/auth"
-	"bot_logic/storage"
-
 	"encoding/json"
 	"net/http"
+
+	"bot_logic/auth"
+	"bot_logic/storage"
 )
 
 type LoginRequest struct {
@@ -13,125 +13,64 @@ type LoginRequest struct {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
+	loginType := r.URL.Query().Get("type")
 
-	if r.URL.Query().Get("type") == "github" {
-		var req LoginRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid request", http.StatusBadRequest)
-			return
-		}
-
-		status := storage.GetUserStatus(req.ChatId)
-
-		if status == "anonymous" {
-			if err := storage.UpdateUser(req.ChatId); err != nil {
-				http.Error(w, "Couldn-t update user", http.StatusBadRequest)
-				return
-			}
-		} else if status == "unknown" {
-			err := storage.CreateUser(req.ChatId)
-			if err != nil {
-				http.Error(w, "Couldn-t create user", http.StatusBadRequest)
-				return
-			}
-		}
-
-		entry_token, err := storage.GetEntryToken(req.ChatId)
-		if err != nil {
-			http.Error(w, "Couldn-t get entry token", http.StatusBadRequest)
-			return
-		}
-
-		url, err := auth.GithubLogin(req.ChatId, entry_token)
-		if err != nil {
-			http.Error(w, "Couldn-t get entry token 2", http.StatusBadRequest)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-
-		json.NewEncoder(w).Encode(map[string]string{
-			"url": url,
-		})
-
-	} else if r.URL.Query().Get("type") == "yandex" {
-		var req LoginRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid request", http.StatusBadRequest)
-			return
-		}
-
-		status := storage.GetUserStatus(req.ChatId)
-
-		if status == "anonymous" {
-			if err := storage.UpdateUser(req.ChatId); err != nil {
-				http.Error(w, "Couldn-t update user", http.StatusBadRequest)
-				return
-			}
-		} else if status == "unknown" {
-			err := storage.CreateUser(req.ChatId)
-			if err != nil {
-				http.Error(w, "Couldn-t create user", http.StatusBadRequest)
-				return
-			}
-		}
-
-		entry_token, err := storage.GetEntryToken(req.ChatId)
-		if err != nil {
-			http.Error(w, "Couldn-t get entry token", http.StatusBadRequest)
-			return
-		}
-
-		url, err := auth.YandexLogin(req.ChatId, entry_token)
-		if err != nil {
-			http.Error(w, "Couldn-t get entry token 2", http.StatusBadRequest)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-
-		json.NewEncoder(w).Encode(map[string]string{
-			"url": url,
-		})
-
-	} else if r.URL.Query().Get("type") == "code" {
-		var req LoginRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid request", http.StatusBadRequest)
-			return
-		}
-
-		status := storage.GetUserStatus(req.ChatId)
-
-		switch status {
-		case "anonymous":
-			if err := storage.UpdateUser(req.ChatId); err != nil {
-				http.Error(w, "Couldn-t update user", http.StatusBadRequest)
-				return
-			}
-		case "unknown":
-			err := storage.CreateUser(req.ChatId)
-			if err != nil {
-				http.Error(w, "Couldn-t create user", http.StatusBadRequest)
-				return
-			}
-		}
-
-		entry_token, err := storage.GetEntryToken(req.ChatId)
-		if err != nil {
-			http.Error(w, "Couldn-t get entry token", http.StatusBadRequest)
-			return
-		}
-
-		code, err := auth.CodeAuth(req.ChatId, entry_token)
-		if err != nil {
-			http.Error(w, "Coundn-t get code", http.StatusNotFound)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"code": code,
-		})
+	var req LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
 	}
+
+	status := storage.GetUserStatus(req.ChatId)
+
+	switch status {
+	case "anonymous":
+		if err := storage.UpdateUser(req.ChatId); err != nil {
+			http.Error(w, "failed to update user", http.StatusBadRequest)
+			return
+		}
+	case "unknown":
+		if err := storage.CreateUser(req.ChatId); err != nil {
+			http.Error(w, "failed to create user", http.StatusBadRequest)
+			return
+		}
+	}
+
+	entryToken, err := storage.GetEntryToken(req.ChatId)
+	if err != nil {
+		http.Error(w, "failed to get entry token", http.StatusBadRequest)
+		return
+	}
+
+	var (
+		result interface{}
+		resultErr error
+	)
+
+	switch loginType {
+	case "github":
+		result, resultErr = auth.GithubLogin(req.ChatId, entryToken)
+	case "yandex":
+		result, resultErr = auth.YandexLogin(req.ChatId, entryToken)
+	case "code":
+		code, err := auth.CodeAuth(req.ChatId, entryToken)
+		if err != nil {
+			http.Error(w, "failed to get code", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"code": code})
+		return
+	default:
+		http.Error(w, "invalid login type", http.StatusBadRequest)
+		return
+	}
+
+	if resultErr != nil {
+		http.Error(w, "login request failed", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }

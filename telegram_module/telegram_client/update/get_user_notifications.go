@@ -20,21 +20,13 @@ type Notification struct {
 type AllNotificationsResponse map[string][]Notification
 
 func GetUserNotifications() {
-	log.Println("🚀 GetUserNotifications() STARTED")
-
 	ticker := time.NewTicker(10 * time.Second)
-	
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
+
+	client := &http.Client{Timeout: 5 * time.Second}
 
 	go func() {
 		for range ticker.C {
-			log.Println("⏰ Tick - checking for notifications...")
-    		
 			url := "http://tg_nginx/notifications"
-
-			log.Printf("Fetching from: %s", url)
 
 			req, err := http.NewRequest("GET", url, nil)
 			if err != nil {
@@ -50,15 +42,16 @@ func GetUserNotifications() {
 				log.Printf("Failed to fetch notifications: %v", err)
 				continue
 			}
-			defer resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
+				resp.Body.Close()
 				log.Printf("Server returned non-OK status: %d", resp.StatusCode)
 				continue
 			}
 
 			var allNotifications AllNotificationsResponse
 			err = json.NewDecoder(resp.Body).Decode(&allNotifications)
+			resp.Body.Close()
 			if err != nil {
 				log.Printf("Failed to decode response: %v", err)
 				continue
@@ -106,15 +99,7 @@ func sendTelegramNotification(botToken, chatID string, notification Notification
 	}
 	defer resp.Body.Close()
 
-	var responseBody map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
-		log.Printf("Failed to decode Telegram response: %v", err)
-	}
-
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Telegram API returned error %d: %v", resp.StatusCode, responseBody)
-		return
+		log.Printf("Telegram API returned error %d", resp.StatusCode)
 	}
-
-	log.Printf("Successfully sent notification to chat %s: %s", chatID, notification.Title)
 }
