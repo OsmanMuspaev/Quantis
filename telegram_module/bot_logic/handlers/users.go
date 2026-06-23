@@ -6,35 +6,35 @@ import (
 	"bot_logic/main_module"
 )
 
-// Получить данные о пользователе (курсы, тесты, оценки)
+// GetUserDataProfileHandler returns aggregated user profile data.
 func GetUserDataProfileHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	targetID := r.URL.Query().Get("target_id")
-	
+
 	c := r.URL.Query().Get("courses") == "true"
 	t := r.URL.Query().Get("tests") == "true"
 	g := r.URL.Query().Get("grades") == "true"
 
 	data, err := main_module.GetUserData(token, targetID, c, t, g)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(data)
 }
 
-// Получить список пользователей
+// GetUsersListHandler returns the list of all users.
 func GetUsersListHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	list, err := main_module.GetUserList(token)
 	if err != nil {
-		http.Error(w, err.Error(), 403)
+		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	json.NewEncoder(w).Encode(list)
 }
 
-// Получить ФИО пользователя
+// GetUserInfoHandler returns user info by target_id.
 func GetUserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	targetID := r.URL.Query().Get("target_id")
@@ -54,36 +54,37 @@ func GetUserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(info)
 }
 
-// Изменить ФИО пользователя
+// UpdateFullNameHandler updates a user's full name.
 func UpdateFullNameHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	targetID := r.URL.Query().Get("target_id")
 
-	var body struct { NewName string `json:"full_name"` }
+	var body struct {
+		NewName string `json:"full_name"`
+	}
 	json.NewDecoder(r.Body).Decode(&body)
 
-	err := main_module.UpdateUserFullName(token, targetID, body.NewName)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
+	if err := main_module.UpdateUserFullName(token, targetID, body.NewName); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 }
 
-// Получить роли пользователя
+// GetUserRolesHandler returns roles for a user.
 func GetUserRolesHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	targetID := r.URL.Query().Get("target_id")
 
 	roles, err := main_module.GetUserRoles(token, targetID)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(map[string][]string{"roles": roles})
 }
 
-// Изменить роли пользователя
+// UpdateUserRolesHandler updates roles for a user.
 func UpdateUserRolesHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	targetID := r.URL.Query().Get("target_id")
@@ -96,15 +97,14 @@ func UpdateUserRolesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := main_module.UpdateUserRoles(token, targetID, body.Roles)
-	if err != nil {
+	if err := main_module.UpdateUserRoles(token, targetID, body.Roles); err != nil {
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
 
-// Посмотреть статус пользователя (Заблокирован/Разблокирован)
+// GetUserBlockStatusHandler returns whether a user is blocked.
 func GetUserBlockStatusHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	targetID := r.URL.Query().Get("target_id")
@@ -117,7 +117,7 @@ func GetUserBlockStatusHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{"is_blocked": isBlocked})
 }
 
-// Заблокировать/Разблокировать пользователя
+// SetUserBlockHandler blocks or unblocks a user.
 func SetUserBlockHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	targetID := r.URL.Query().Get("target_id")
@@ -130,8 +130,7 @@ func SetUserBlockHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := main_module.SetUserBlockStatus(token, targetID, body.IsBlocked)
-	if err != nil {
+	if err := main_module.SetUserBlockStatus(token, targetID, body.IsBlocked); err != nil {
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}

@@ -3,6 +3,7 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -12,35 +13,31 @@ type CodeResponse struct {
 	Code string `json:"code"`
 }
 
-func CodeAuth(chat_id int, entry_token string) (string, error) {
-
-	url := "http://auth:8081/login?type=code"
-
-	body := map[string]string{"entry_token": entry_token}
-	jsonData, _ := json.Marshal(body)
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+func CodeAuth(chatID int, entryToken string) (string, error) {
+	body := map[string]string{"entry_token": entryToken}
+	jsonData, err := json.Marshal(body)
 	if err != nil {
-		log.Printf("Err request: %v\n", err)
-		return "", err
+		return "", fmt.Errorf("failed to marshal request: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", "http://auth:8081/login?type=code", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Err response: %v\n", err)
+		log.Printf("CodeAuth request failed: %v", err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
-	var coderesp CodeResponse
-	if err := json.NewDecoder(resp.Body).Decode(&coderesp); err != nil {
-		log.Printf("Err request: %v\n", err)
-		return "", err
+	var codeResp CodeResponse
+	if err := json.NewDecoder(resp.Body).Decode(&codeResp); err != nil {
+		return "", fmt.Errorf("failed to parse response: %v", err)
 	}
 
-	return coderesp.Code, nil
+	return codeResp.Code, nil
 }

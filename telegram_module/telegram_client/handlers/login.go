@@ -1,27 +1,27 @@
 package handlers
 
-import ( 
-	tgbotapi "gopkg.in/telegram-bot-api.v4"
+import (
 	"log"
+
+	tgbotapi "gopkg.in/telegram-bot-api.v4"
 )
 
 func LoginBot(bot *tgbotapi.BotAPI, msg *tgbotapi.CallbackQuery, status string) {
-	m := tgbotapi.NewMessage(msg.Message.Chat.ID, "Выберите способ входа: ")
+	m := tgbotapi.NewMessage(msg.Message.Chat.ID, "Choose a login method:")
 
-	github_login := tgbotapi.NewInlineKeyboardButtonData("Github OAuth", "github_login")
-	yandex_login := tgbotapi.NewInlineKeyboardButtonData("Yandex OAuth", "yandex_login")
-	code_au := tgbotapi.NewInlineKeyboardButtonData("Code Auth", "code_au")
+	githubLogin := tgbotapi.NewInlineKeyboardButtonData("Github OAuth", "github_login")
+	yandexLogin := tgbotapi.NewInlineKeyboardButtonData("Yandex OAuth", "yandex_login")
+	codeAuth := tgbotapi.NewInlineKeyboardButtonData("Code Auth", "code_au")
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(github_login),
-		tgbotapi.NewInlineKeyboardRow(yandex_login),
-		tgbotapi.NewInlineKeyboardRow(code_au),
+		tgbotapi.NewInlineKeyboardRow(githubLogin),
+		tgbotapi.NewInlineKeyboardRow(yandexLogin),
+		tgbotapi.NewInlineKeyboardRow(codeAuth),
 	)
 	m.ReplyMarkup = keyboard
 
-	_, err := bot.Send(m)
-	if err != nil {
-		log.Printf("Error sending login button: %v", err)
+	if _, err := bot.Send(m); err != nil {
+		log.Printf("Failed to send login options: %v", err)
 	}
 	delete := tgbotapi.NewDeleteMessage(msg.Message.Chat.ID, msg.Message.MessageID)
 	bot.Send(delete)

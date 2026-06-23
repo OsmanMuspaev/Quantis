@@ -1,10 +1,9 @@
 package handlers
 
 import (
-	"net/http"
 	"bot_logic/storage"
-
 	"encoding/json"
+	"net/http"
 )
 
 type GetUserStatusRequest struct {
@@ -15,16 +14,14 @@ type GetUserStatusResponse struct {
 	Status string `json:"status"`
 }
 
-
-func GetUserStatus(w http.ResponseWriter, r *http.Request) () {
+// GetUserStatus returns the current status of a user.
+func GetUserStatus(w http.ResponseWriter, r *http.Request) {
 	var req GetUserStatusRequest
-
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
 	status := storage.GetUserStatus(req.ChatId)
-
 	json.NewEncoder(w).Encode(GetUserStatusResponse{Status: status})
 }

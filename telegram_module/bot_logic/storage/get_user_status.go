@@ -2,25 +2,28 @@ package storage
 
 import (
 	"context"
+	"log"
 	"strconv"
 )
 
 var ctx = context.Background()
 
-func GetUserStatus(chat_id int)(string){
-	id := strconv.Itoa(chat_id)
+func GetUserStatus(chatID int) string {
+	id := strconv.Itoa(chatID)
 	session, err := AuthRedis.Exists(ctx, id).Result()
 	if err != nil {
-		panic(err)
+		log.Printf("Redis error checking user %s: %v", id, err)
+		return "unknown"
 	}
 	if session == 0 {
 		return "unknown"
-	} else {
-		status, err := AuthRedis.HGet(ctx, id, "status").Result()
-		if err != nil {
-			panic(err)
-		}
-
-		return status
 	}
+
+	status, err := AuthRedis.HGet(ctx, id, "status").Result()
+	if err != nil {
+		log.Printf("Redis error getting status for %s: %v", id, err)
+		return "unknown"
+	}
+
+	return status
 }

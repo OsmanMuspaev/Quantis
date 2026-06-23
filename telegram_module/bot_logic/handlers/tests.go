@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+
 	"bot_logic/main_module"
 )
 
-// Получение тестов
+// GetTestsHandler returns tests for a course.
 func GetTestsHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	courseID, _ := strconv.Atoi(r.URL.Query().Get("course_id"))
@@ -22,7 +23,7 @@ func GetTestsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tests)
 }
 
-// Создание теста
+// CreateTestHandler creates a new test.
 func CreateTestHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	courseID, _ := strconv.Atoi(r.URL.Query().Get("course_id"))
@@ -42,7 +43,7 @@ func CreateTestHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]int{"id": id})
 }
 
-// Удаление теста
+// DeleteTestHandler deletes a test.
 func DeleteTestHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -50,16 +51,13 @@ func DeleteTestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	token, _ := getToken(r)
 
-	testIDStr := r.URL.Query().Get("test_id")
-	testID, err := strconv.Atoi(testIDStr)
-
+	testID, err := strconv.Atoi(r.URL.Query().Get("test_id"))
 	if err != nil {
 		http.Error(w, "Invalid test_id", http.StatusBadRequest)
 		return
 	}
 
-	err = main_module.DeleteTest(token, testID)
-	if err != nil {
+	if err := main_module.DeleteTest(token, testID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -67,7 +65,7 @@ func DeleteTestHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Получение статуса теста
+// GetTestStatusHandler returns whether a test is active.
 func GetTestStatusHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	courseID, _ := strconv.Atoi(r.URL.Query().Get("course_id"))
@@ -82,7 +80,7 @@ func GetTestStatusHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{"is_active": isActive})
 }
 
-// Добавить вопрос в тест
+// AddQuestionToTestHandler adds a question to a test.
 func AddQuestionToTestHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -93,8 +91,7 @@ func AddQuestionToTestHandler(w http.ResponseWriter, r *http.Request) {
 	testID, _ := strconv.Atoi(r.URL.Query().Get("test_id"))
 	questionID, _ := strconv.Atoi(r.URL.Query().Get("question_id"))
 
-	err := main_module.AddQuestionToTest(token, testID, questionID)
-	if err != nil {
+	if err := main_module.AddQuestionToTest(token, testID, questionID); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -102,7 +99,7 @@ func AddQuestionToTestHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-// Удалить вопрос из теста
+// RemoveQuestionFromTestHandler removes a question from a test.
 func RemoveQuestionFromTestHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -113,8 +110,7 @@ func RemoveQuestionFromTestHandler(w http.ResponseWriter, r *http.Request) {
 	testID, _ := strconv.Atoi(r.URL.Query().Get("test_id"))
 	questionID, _ := strconv.Atoi(r.URL.Query().Get("question_id"))
 
-	err := main_module.RemoveQuestionFromTest(token, testID, questionID)
-	if err != nil {
+	if err := main_module.RemoveQuestionFromTest(token, testID, questionID); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -122,7 +118,7 @@ func RemoveQuestionFromTestHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Активация/Деактивация теста
+// ToggleTestActivationHandler activates or deactivates a test.
 func ToggleTestActivationHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	courseID, _ := strconv.Atoi(r.URL.Query().Get("course_id"))
@@ -136,15 +132,14 @@ func ToggleTestActivationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := main_module.UpdateTestActivation(token, courseID, testID, body.IsActive)
-	if err != nil {
+	if err := main_module.UpdateTestActivation(token, courseID, testID, body.IsActive); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Изменение порядка вопросов
+// ReorderQuestionsHandler reorders questions in a test.
 func ReorderQuestionsHandler(w http.ResponseWriter, r *http.Request) {
 	token, _ := getToken(r)
 	testID, _ := strconv.Atoi(r.URL.Query().Get("test_id"))
@@ -157,8 +152,7 @@ func ReorderQuestionsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := main_module.ReorderQuestions(token, testID, body.QuestionIDs)
-	if err != nil {
+	if err := main_module.ReorderQuestions(token, testID, body.QuestionIDs); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

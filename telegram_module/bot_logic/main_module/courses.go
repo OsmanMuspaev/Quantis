@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// Получить курсы
+// GetCourses returns all courses.
 func GetCourses(token string) ([]Course, error) {
 	req, _ := http.NewRequest("GET", baseURL+"/courses", nil)
 	setAuthHeader(req, token)
@@ -29,7 +29,7 @@ func GetCourses(token string) ([]Course, error) {
 	return data.Courses, nil
 }
 
-// Получить курс по айди
+// GetCourseByID returns a single course by ID.
 func GetCourseByID(token string, id int) (*Course, error) {
 	url := fmt.Sprintf("%s/courses/%d", baseURL, id)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -50,7 +50,7 @@ func GetCourseByID(token string, id int) (*Course, error) {
 	return &course, nil
 }
 
-// Создание курсы
+// CreateCourse creates a new course.
 func CreateCourse(token string, title, description string) (int, error) {
 	payload := CoursePayload{Title: title, Description: description}
 	body, _ := json.Marshal(payload)
@@ -73,7 +73,7 @@ func CreateCourse(token string, title, description string) (int, error) {
 	return res.ID, nil
 }
 
-// Изменение курса
+// UpdateCourse updates an existing course.
 func UpdateCourse(token string, id int, title, description string) error {
 	payload := CoursePayload{Title: title, Description: description}
 	body, _ := json.Marshal(payload)
@@ -94,7 +94,7 @@ func UpdateCourse(token string, id int, title, description string) error {
 	return nil
 }
 
-// Удаление курса
+// DeleteCourse removes a course by ID.
 func DeleteCourse(token string, id int) error {
 	url := fmt.Sprintf("%s/courses/%d", baseURL, id)
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -112,7 +112,7 @@ func DeleteCourse(token string, id int) error {
 	return nil
 }
 
-// Запись пользователя на курс
+// JoinCourse enrolls a user in a course.
 func JoinCourse(token string, id int, targetUserID string) error {
 	payload := UserPayload{UserID: targetUserID}
 	body, _ := json.Marshal(payload)
@@ -133,7 +133,7 @@ func JoinCourse(token string, id int, targetUserID string) error {
 	return nil
 }
 
-// Удаление пользователя с курса
+// LeaveCourse unenrolls a user from a course.
 func LeaveCourse(token string, id int, targetUserID string) error {
 	payload := UserPayload{UserID: targetUserID}
 	body, _ := json.Marshal(payload)
@@ -154,7 +154,7 @@ func LeaveCourse(token string, id int, targetUserID string) error {
 	return nil
 }
 
-// Список студентов на курсе
+// GetCourseStudents returns the list of students enrolled in a course.
 func GetCourseStudents(token string, id int) ([]string, error) {
 	url := fmt.Sprintf("%s/courses/%d/students", baseURL, id)
 	req, _ := http.NewRequest("GET", url, nil)
