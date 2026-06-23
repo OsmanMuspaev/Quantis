@@ -13,7 +13,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		var req RefreshResponse
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid request :<", http.StatusBadRequest)
+			http.Error(w, "invalid request", http.StatusBadRequest)
 			return
 		}
 
@@ -38,13 +38,13 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
-			"status": "ok (logged out successfully EVERYWHERE)",
+			"status": "logged out successfully",
 		})
 	} else {
 		var req RefreshResponse
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid request :<", http.StatusBadRequest)
+			http.Error(w, "invalid request", http.StatusBadRequest)
 			return
 		}
 
@@ -69,7 +69,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
-			"status": "ok (logged out successfully)",
+			"status": "logged out successfully",
 		})
 	}
 }

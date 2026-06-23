@@ -1,16 +1,14 @@
 package clients
 
 import (
-	// "bytes" //bytes – стандартная библиотека Go, нужен для bytes.NewBuffer, чтобы передать JSON как тело POST запроса.
 	"encoding/json"
-	"net/http"
-	"os" // стандартная библиотека для чтения переменных окружения
-	"time"
-	"net/url"
-	"strings"
 	"errors"
 	"io"
-	"log"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
 )
 
 type githubTokenResponse struct {
@@ -24,7 +22,12 @@ func ExchangeGithubCodeForToken(code string) (string, error) {
 	data.Set("client_id", os.Getenv("GITHUB_CLIENT_ID"))
 	data.Set("client_secret", os.Getenv("GITHUB_CLIENT_SECRET"))
 	data.Set("code", code)
-	data.Set("redirect_uri", "https://elda-unsimple-leandro.ngrok-free.dev/login/github/callback")
+
+	redirectURI := os.Getenv("GITHUB_REDIRECT_URI")
+	if redirectURI == "" {
+		redirectURI = "http://localhost:8081/auth/github/callback"
+	}
+	data.Set("redirect_uri", redirectURI)
 
 	req, err := http.NewRequest(
 		"POST",
@@ -38,14 +41,17 @@ func ExchangeGithubCodeForToken(code string) (string, error) {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
-	bodyBytes, _ := io.ReadAll(resp.Body)
-	log.Println("GitHub token raw response:", string(bodyBytes))
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
 
 	var tokenResp githubTokenResponse
 
@@ -59,12 +65,3 @@ func ExchangeGithubCodeForToken(code string) (string, error) {
 
 	return tokenResp.AccessToken, nil
 }
-
-// Bearer-токен означает: любой, у кого есть этот токен, считается авторизованным.
-// То есть: нет подписи, нет шифрования, просто строка
-
-// Зачем bytes.NewBuffer?
-// HTTP-запрос в Go принимает тело как io.Reader, а не []byte.
-// bytes.Buffer: 
-// оборачивает []byte
-// делает из него поток (io.Reader)
