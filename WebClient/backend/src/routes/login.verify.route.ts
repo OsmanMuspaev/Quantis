@@ -1,12 +1,13 @@
 import { Router, Request, Response } from "express";
 import { verifyWithAuth } from "../services/auth.service";
 import { SessionRepository } from "../redis/session.repository";
+import { SESSION_COOKIE_NAME } from "../config/cookies";
 
 const router = Router();
 
 router.post("/login/verify", async (req: Request, res: Response) => {
   try {
-    const sessionId = req.cookies?.session_id;
+    const sessionId = req.cookies?.[SESSION_COOKIE_NAME];
     const { code } = req.body;
 
     if (!sessionId || !code) {
@@ -23,17 +24,13 @@ router.post("/login/verify", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Session is not pending" });
     }
 
-    const authResponse = await verifyWithAuth(
-      session.entryToken,
-      code
-    );
+    const authResponse = await verifyWithAuth(session.entryToken, code);
 
     if (authResponse.status === "pending") {
       return res.json({ status: "pending" });
     }
 
     if (authResponse.status === "access_denied") {
-
       await SessionRepository.delete(sessionId);
       return res.status(401).json({ status: "access_denied" });
     }
@@ -45,11 +42,9 @@ router.post("/login/verify", async (req: Request, res: Response) => {
       userId: authResponse.user_id,
     });
 
-    // Сообщаем SPA об успехе
     return res.json({ status: "approved" });
-
   } catch (error) {
-    console.error("LOGIN VERIFY ERROR:", error);
+    console.error("Login verify failed:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });

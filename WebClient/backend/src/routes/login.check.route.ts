@@ -4,7 +4,7 @@ import { SessionRepository } from "../redis/session.repository";
 const router = Router();
 
 router.get("/login/check", async (req: Request, res: Response) => {
-  const sessionId = (req as any).sessionId as string | null;
+  const sessionId = req.sessionId;
 
   if (!sessionId) {
     return res.status(200).json({ status: "anonymous" });
