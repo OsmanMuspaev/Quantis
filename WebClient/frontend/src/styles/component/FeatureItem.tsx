@@ -2,8 +2,12 @@ import { Card } from './Card';
 import { Text } from '../primitives/Text';
 import { Stack } from '../primitives/Stack';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const FeatureItem = ({ title, description }: any) => (
+interface FeatureItemProps {
+  title: string;
+  description: string;
+}
+
+export const FeatureItem = ({ title, description }: FeatureItemProps) => (
   <Card>
     <Stack gap={8}>
       <Text variant="h3">{title}</Text>

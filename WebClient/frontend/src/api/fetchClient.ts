@@ -20,8 +20,6 @@ export async function fetchClient<T>(
     },
   });
   
-  console.log("HTTP status:", response.status);
-
   if (response.ok) {
     return response.json();
   }

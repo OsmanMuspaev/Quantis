@@ -7,7 +7,7 @@ import { Center } from '../styles/layout/Center';
 import { Link } from 'react-router-dom';
 
 const CardHome = styled(Card)`
-  whith: 60%;
+  width: 60%;
 `
 
 const HomePage = () => {

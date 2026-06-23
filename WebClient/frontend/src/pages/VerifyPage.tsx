@@ -12,7 +12,7 @@ import { theme } from "../styles/theme";
 
 const TextError = styled(Text)`
   color: ${theme.colors.error};
-  marginTop: 12px; 
+  margin-top: 12px;
 `
 
 const CardVerify = styled(Card)`

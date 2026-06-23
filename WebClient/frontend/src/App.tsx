@@ -7,6 +7,8 @@ import VerifyPage from "./pages/VerifyPage";
 import ProfilePage from "./pages/ProfilePage";
 import MyTestsPage from "./pages/MyTestsPage";
 import TestResultPage from "./pages/TestResultPage";
+import ForbiddenPage from "./pages/ForbiddenPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 import ProtectedRoute from "./router/ProtectedRoute";
 import PublicRoute from "./router/PublicRoute";
@@ -24,7 +26,7 @@ function App() {
       />
 
       <Route
-        path="/login" 
+        path="/login"
         element={
           <PublicRoute>
             <LoginPage />
@@ -41,7 +43,9 @@ function App() {
         }
       />
 
-      <Route element={<MainLayout/>}>
+      <Route path="/forbidden" element={<ForbiddenPage />} />
+
+      <Route element={<MainLayout />}>
         <Route
           path="/profile"
           element={
@@ -69,6 +73,8 @@ function App() {
           }
         />
       </Route>
+
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

@@ -1,13 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 
+declare global {
+  namespace Express {
+    interface Request {
+      sessionId?: string | null;
+    }
+  }
+}
+
 export function sessionMiddleware(
   req: Request,
   _: Response,
   next: NextFunction
 ) {
-  const sessionId = req.cookies?.session_id;
-
-  (req as any).sessionId = sessionId || null;
-
+  req.sessionId = req.cookies?.session_id || null;
   next();
 }

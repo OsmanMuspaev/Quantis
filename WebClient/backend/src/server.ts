@@ -5,6 +5,8 @@ import { sessionMiddleware } from "./middlewares/session.middleware";
 import loginCheckRoute from "./routes/login.check.route";
 import loginStartRoute from "./routes/login.start.route";
 import loginVerifyRoute from "./routes/login.verify.route";
+import logoutRoute from "./routes/logout.route";
+import authRefreshRoute from "./routes/auth.refresh.route";
 
 async function bootstrap() {
   await connectRedis();
@@ -12,16 +14,14 @@ async function bootstrap() {
   const app = express();
   app.use(express.json());
   app.use(cookieParser());
-
-  // middleware сессии
   app.use(sessionMiddleware);
 
-  // routes
   app.use(loginCheckRoute);
   app.use(loginStartRoute);
-
   app.use(loginVerifyRoute);
-  
+  app.use(logoutRoute);
+  app.use(authRefreshRoute);
+
   app.get("/health", (_, res) => {
     res.send("OK");
   });
