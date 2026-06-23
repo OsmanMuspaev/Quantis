@@ -23,7 +23,6 @@ func GithubAuth(code string) (*domain.User, error) {
     if err != nil {
         return nil, err
     }
-	// Если данные пришли - достаем ВСЕ почты пользователя (может быть > 1) и ищем нужную 
     emails, err := clients.GetGithubEmails(token)
     if err != nil {
         return nil, err
@@ -61,7 +60,6 @@ func GithubAuth(code string) (*domain.User, error) {
     }
 
     if err != mongo.ErrNoDocuments {
-        // реальная ошибка БД
         log.Printf("FindUserByEmail error: %v\n", err)
 
         return nil, err
@@ -71,7 +69,7 @@ func GithubAuth(code string) (*domain.User, error) {
     newUser, err := storage.CreateUser(domain.User{
 		Email:             email,
 		GithubID:          &githubID,
-        Name:              "Anonymous" + strconv.FormatInt(profile.ID + 14, 10),
+        Name:              "User-" + githubID,
         Roles:             []string{string(domain.RoleStudent)},
         Permissions:       permissions.ResolvePermissions([]string{string(domain.RoleStudent)}),
 		RefreshTokens:     []string{},

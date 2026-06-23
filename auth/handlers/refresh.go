@@ -28,7 +28,7 @@ func Refresh(w http.ResponseWriter, r *http.Request) {
 	var req RefreshResponse
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request :<", http.StatusBadRequest)
+		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
