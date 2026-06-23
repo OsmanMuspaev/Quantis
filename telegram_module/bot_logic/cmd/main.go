@@ -1,20 +1,26 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
+	"os"
 
 	"bot_logic/handlers"
 	"bot_logic/storage"
 	"bot_logic/update"
 )
 
-func main(){
-	storage.InitRedis()
-	handlers.RegisterRoutes()
+func main() {
+	if err := storage.InitRedis(); err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
 
+	handlers.RegisterRoutes()
 	update.RefreshUsersTokens()
 
-	fmt.Println("Сервер запущен на :8083")
-	http.ListenAndServe(":8083", nil)
+	addr := ":8083"
+	log.Printf("Server started on %s", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
 }

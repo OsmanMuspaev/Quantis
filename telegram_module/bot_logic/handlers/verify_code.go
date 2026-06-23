@@ -1,16 +1,15 @@
 package handlers
 
 import (
+	"bot_logic/auth"
 	"bot_logic/storage"
 	"encoding/json"
 	"net/http"
 	"strconv"
-
-	"bot_logic/auth"
 )
 
 type VerifyCodeRequest struct {
-	ChatId string    `json:"chat_id"`
+	ChatId string `json:"chat_id"`
 	Code   string `json:"code"`
 }
 
@@ -22,20 +21,20 @@ func VerifyCode(w http.ResponseWriter, r *http.Request) {
 	}
 	id, err := strconv.Atoi(req.ChatId)
 	if err != nil {
-		http.Error(w, "invalid code", http.StatusBadRequest)
+		http.Error(w, "invalid chat_id", http.StatusBadRequest)
 		return
 	}
 	status := storage.GetUserStatus(id)
 
-	if status == "authorized" {
-		err := auth.VerifyCode(id, req.Code)
-		if err != nil {
-			w.Write([]byte("Error verify code (HANDLER)"))
-		} else {
-			
-			w.Write([]byte("You were successfully logged in. You can continue on your new device!"))
-		}
-	} else {
-		w.Write([]byte("You are not allowed to do this command. Please, sign up/in at first."))
+	if status != "authorized" {
+		http.Error(w, "not authorized", http.StatusForbidden)
+		return
 	}
+
+	if err := auth.VerifyCode(id, req.Code); err != nil {
+		http.Error(w, "code verification failed", http.StatusBadRequest)
+		return
+	}
+
+	w.Write([]byte("Successfully logged in. You can continue on your new device!"))
 }

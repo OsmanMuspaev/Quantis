@@ -3,41 +3,38 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"io"
-	"fmt"
+	"time"
 )
 
-
-func YandexLogin(chat_id int, entry_token string) (string, error) {
-	url := "http://auth:8081/login?type=yandex"
-
-	body := map[string]string{"entry_token": entry_token}
-	jsonData, _ := json.Marshal(body)
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+func YandexLogin(chatID int, entryToken string) (string, error) {
+	body := map[string]string{"entry_token": entryToken}
+	jsonData, err := json.Marshal(body)
 	if err != nil {
-		log.Printf("Err request: %v\n", err)
-		return "", err
+		return "", fmt.Errorf("failed to marshal request: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", "http://auth:8081/login?type=yandex", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}	
-    resp, err := client.Do(req)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Err response: %v\n", err)
+		log.Printf("YandexLogin request failed: %v", err)
 		return "", err
 	}
-    defer resp.Body.Close()
+	defer resp.Body.Close()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return "", fmt.Errorf("error reading response: %v", err)
-    }
-	fmt.Println(string(bodyBytes))
+	if err != nil {
+		return "", fmt.Errorf("failed to read response: %v", err)
+	}
 
-    return string(bodyBytes), nil
+	return string(bodyBytes), nil
 }
-
-

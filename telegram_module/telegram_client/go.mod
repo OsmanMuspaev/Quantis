@@ -1,6 +1,6 @@
 module telegram_client
 
-go 1.25.5
+go 1.22.5
 
 require gopkg.in/telegram-bot-api.v4 v4.6.4
 

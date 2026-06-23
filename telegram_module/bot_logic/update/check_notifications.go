@@ -2,16 +2,16 @@ package update
 
 import (
 	"context"
-	"bot_logic/storage"
 	"log"
+
+	"bot_logic/storage"
 )
 
+// CollectNotificationsFromAllUsers gathers notifications from main_module for all authorized users.
 func CollectNotificationsFromAllUsers() (map[string][]Notification, error) {
 	ctx := context.Background()
 
-	log.Println("[INFO] === Starting Global Notification Collection ===")
-
-	user_notifications := make(map[string][]Notification)
+	userNotifications := make(map[string][]Notification)
 
 	iter := storage.AuthRedis.Scan(ctx, 0, "*", 0).Iterator()
 
@@ -20,38 +20,28 @@ func CollectNotificationsFromAllUsers() (map[string][]Notification, error) {
 
 		userData, err := storage.AuthRedis.HGetAll(ctx, chatID).Result()
 		if err != nil {
-			log.Printf("[ERROR] Failed to HGETALL for chatID %s: %v", chatID, err)
+			log.Printf("Failed to HGETALL for chatID %s: %v", chatID, err)
 			continue
 		}
 
 		status := userData["status"]
 		token := userData["access_token"]
 
-		if status != "authorized" {
-			log.Printf("[DEBUG] Skipping chatID %s: status is '%s' (need 'authorized')", chatID, status)
+		if status != "authorized" || token == "" {
 			continue
 		}
-
-		if token == "" {
-			log.Printf("[WARN] Skipping chatID %s: status is 'authorized' but access_token is EMPTY", chatID)
-			continue
-		}
-
-		log.Printf("[DEBUG] Processing authorized user: chatID %s (userID %s)", chatID, userData["user_id"])
 
 		notifications, err := fetchUserNotifications(token)
 		if err != nil {
-			log.Printf("[ERROR] Failed to fetch notifications for chatID %s: %v", chatID, err)
+			log.Printf("Failed to fetch notifications for chatID %s: %v", chatID, err)
 			continue
 		}
 
 		if len(notifications) == 0 {
-			log.Printf("[DEBUG] No new notifications for chatID %s", chatID)
 			continue
 		}
 
-		user_notifications[chatID] = notifications
-		log.Printf("[SUCCESS] Found %d notifications for chatID %s", len(notifications), chatID)
+		userNotifications[chatID] = notifications
 
 		var ids []int
 		for _, n := range notifications {
@@ -60,8 +50,8 @@ func CollectNotificationsFromAllUsers() (map[string][]Notification, error) {
 		confirmNotifications(token, ids)
 	}
 	if err := iter.Err(); err != nil {
-		log.Printf("[CRITICAL] Redis SCAN iterator error: %v", err)
+		log.Printf("Redis SCAN iterator error: %v", err)
 		return nil, err
 	}
-	return user_notifications, nil
+	return userNotifications, nil
 }

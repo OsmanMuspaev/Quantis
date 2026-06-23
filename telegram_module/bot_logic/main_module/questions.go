@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// Создать вопрос
+// CreateQuestion creates a new question.
 func CreateQuestion(token string, q Question) (int, error) {
 	body, _ := json.Marshal(q)
 	req, _ := http.NewRequest("POST", baseURL+"/questions", bytes.NewBuffer(body))
@@ -28,7 +28,7 @@ func CreateQuestion(token string, q Question) (int, error) {
 	return res.ID, nil
 }
 
-// Удалить вопрос
+// DeleteQuestion removes a question by ID.
 func DeleteQuestion(token string, id int) error {
 	url := fmt.Sprintf("%s/questions/%d", baseURL, id)
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -41,12 +41,12 @@ func DeleteQuestion(token string, id int) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("failed to delete question (maybe used in tests): %d", resp.StatusCode)
+		return fmt.Errorf("failed to delete question: %d", resp.StatusCode)
 	}
 	return nil
 }
 
-// Изменить вопрос
+// UpdateQuestion updates an existing question.
 func UpdateQuestion(token string, id int, q Question) (int, error) {
 	body, _ := json.Marshal(q)
 	url := fmt.Sprintf("%s/questions/%d", baseURL, id)
@@ -68,7 +68,7 @@ func UpdateQuestion(token string, id int, q Question) (int, error) {
 	return res.NewVersion, nil
 }
 
-// Получить информацию о вопросе
+// GetQuestionDetail returns a specific version of a question.
 func GetQuestionDetail(token string, id, version int) (*Question, error) {
 	url := fmt.Sprintf("%s/questions/%d/%d", baseURL, id, version)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -89,7 +89,7 @@ func GetQuestionDetail(token string, id, version int) (*Question, error) {
 	return &q, nil
 }
 
-// Получить вопросы
+// GetMyQuestions returns all questions owned by the current user.
 func GetMyQuestions(token string) ([]Question, error) {
 	req, _ := http.NewRequest("GET", baseURL+"/questions", nil)
 	setAuthHeader(req, token)

@@ -1,7 +1,6 @@
 package main_module
 
-
-// Для курсов
+// Course represents a learning course.
 type Course struct {
 	ID          int    `json:"id"`
 	Title       string `json:"title"`
@@ -26,8 +25,7 @@ type UserPayload struct {
 	UserID string `json:"user_id"`
 }
 
-
-// Для тестов
+// Test represents a test within a course.
 type Test struct {
 	ID    int    `json:"id"`
 	Title string `json:"title"`
@@ -41,9 +39,7 @@ type TestStatusResponse struct {
 	IsActive bool `json:"is_active"`
 }
 
-
-
-// Для юзеров
+// UserProfileData holds aggregated user data for profile display.
 type UserProfileData struct {
 	UserID  string `json:"user_id"`
 	Courses any    `json:"courses,omitempty"`
@@ -60,9 +56,7 @@ type UserRolesResponse struct {
 	Roles []string `json:"roles"`
 }
 
-
-
-// Для вопросов
+// Question represents a test question with multiple-choice options.
 type Question struct {
 	ID            int      `json:"id"`
 	Version       int      `json:"version,omitempty"`
@@ -77,14 +71,12 @@ type QuestionListResponse struct {
 	Questions []Question `json:"questions"`
 }
 
-
-
-
-// Для попыток
+// Score holds a user's score on a test.
 type Score struct {
 	UserID string  `json:"user_id"`
 	Score  float64 `json:"score"`
 }
+
 type AnswerDetail struct {
 	Question string `json:"question"`
 	Answer   string `json:"answer"`
