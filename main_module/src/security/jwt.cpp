@@ -3,8 +3,6 @@
 #include <cstdlib>
 #include <string>
 
-// Реализация проверки JWT
-
 UserContext parseAndVerifyJWT(const crow::request& req) {
     const char* env_secret = std::getenv("JWT_SECRET_KEY");
 

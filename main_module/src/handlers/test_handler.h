@@ -11,7 +11,7 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int courseId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto course = db.getCourseById(courseId);
@@ -51,7 +51,7 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int courseId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto course = db.getCourseById(courseId);
@@ -93,7 +93,7 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int testId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto test = db.getTestById(testId);
@@ -129,12 +129,12 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
             return crow::response(500, "Database error during deletion");
         }
     });
-    // Посмотреть информацию от тесте(Активный тест или нет) ccc
+    // Check if a test is active or not
     CROW_ROUTE(app, "/courses/<int>/tests/<int>/status").methods("GET"_method)
     ([&db](const crow::request& req, int courseId, int testId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto course = db.getCourseById(courseId);
@@ -168,7 +168,7 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int courseId, int testId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto course = db.getCourseById(courseId);
@@ -212,8 +212,6 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
         } else {
             auto usersInProcess = db.getUsersWhoPassedTest(testId);
 
-            db.finalizeAllTestAttempts(testId);
-
             for (auto uId : usersInProcess) {
                 db.pushNotification(
                     uId,
@@ -232,7 +230,7 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int testId, int questionId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto test = db.getTestById(testId);
@@ -262,7 +260,7 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int testId, int questionId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto test = db.getTestById(testId);
@@ -271,7 +269,7 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
 
         auto course = db.getCourseById(test.course_id);
 
-        if (ctx.userId != course.author_id || ctx.userId != question.author_id) {
+        if (ctx.userId != course.author_id && ctx.userId != question.author_id) {
             PermissionRule rule{
                 "test:quest:add", 
                 false, 
@@ -293,7 +291,7 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int testId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto test = db.getTestById(testId);
@@ -326,6 +324,5 @@ inline void registerTestRoutes(crow::SimpleApp& app, DB& db) {
         } else {
             return crow::response(400, "Cannot reorder: test has attempts or database error");
         }
-        return crow::response(500, "Unexpected error"); 
     });
 }

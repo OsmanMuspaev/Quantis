@@ -4,10 +4,10 @@
 std::vector<Course> DB::getCourses() {
     ensureConnection();
     std::vector<Course> courses;
-    PGresult* res = PQexec((PGconn*)conn, "SELECT id, title, description FROM courses WHERE is_deleted = false");
+    PGresult* res = PQexec(conn, "SELECT id, title, description FROM courses WHERE is_deleted = false");
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        std::cerr << "SELECT failed: " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "SELECT failed: " << PQerrorMessage(conn) << std::endl;
         PQclear(res);
         return courses;
     }
@@ -30,7 +30,7 @@ Course DB::getCourseById(int courseId) {
     const char* paramValues[1] = { idStr.c_str() };
 
     PGresult* res = PQexecParams(
-        (PGconn*)conn,
+        conn,
         "SELECT id, title, description, author_id, is_deleted FROM courses WHERE id = $1",
         1, nullptr, paramValues, nullptr, nullptr, 0
     );
@@ -52,7 +52,7 @@ Course DB::getCourseById(int courseId) {
 }
 
 // Создание курса
-int DB::createCourse(const std::string& title, const std::string& description, std::string authorId) {
+int DB::createCourse(const std::string& title, const std::string& description, const std::string& authorId) {
     ensureConnection();
     const char* paramValues[3] = { 
         title.c_str(), 
@@ -61,7 +61,7 @@ int DB::createCourse(const std::string& title, const std::string& description, s
     };
 
     PGresult* res = PQexecParams(
-        (PGconn*)conn,
+        conn,
         "INSERT INTO courses(title, description, author_id) VALUES ($1, $2, $3) RETURNING id",
         3, nullptr, paramValues, nullptr, nullptr, 0
     );
@@ -71,7 +71,7 @@ int DB::createCourse(const std::string& title, const std::string& description, s
     if (PQresultStatus(res) == PGRES_TUPLES_OK) {
         newId = std::stoi(PQgetvalue(res, 0, 0));
     } else {
-        std::cerr << "Create course failed: " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "Create course failed: " << PQerrorMessage(conn) << std::endl;
     }
     PQclear(res);
     return newId;
@@ -84,20 +84,20 @@ void DB::deleteCourse(int courseId) {
     std::string idStr = std::to_string(courseId);
     const char* paramValues[] = { idStr.c_str() };
     PGresult* res = PQexecParams(
-        (PGconn*)conn,
+        conn,
         "UPDATE courses SET is_deleted = true WHERE id = $1",
         1, nullptr, paramValues, nullptr, nullptr, 0
     );
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        std::cerr << "Soft delete course failed: " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "Soft delete course failed: " << PQerrorMessage(conn) << std::endl;
     }
 
     PQclear(res);
 }
 
 // Изменение информации о курсе
-bool DB::updateCourse(int courseId, std::string title, std::string description) {
+bool DB::updateCourse(int courseId, const std::string& title, const std::string& description) {
     ensureConnection();
     
     std::string idStr = std::to_string(courseId);
@@ -108,7 +108,7 @@ bool DB::updateCourse(int courseId, std::string title, std::string description) 
     };
 
     PGresult* res = PQexecParams(
-        (PGconn*)conn,
+        conn,
         "UPDATE courses SET title = $1, description = $2 WHERE id = $3 AND is_deleted = false",
         3, nullptr, paramValues, nullptr, nullptr, 0
     );
@@ -116,7 +116,7 @@ bool DB::updateCourse(int courseId, std::string title, std::string description) 
     bool success = (PQresultStatus(res) == PGRES_COMMAND_OK && std::string(PQcmdTuples(res)) == "1");
 
     if (!success) {
-        std::cerr << "Update course failed: " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "Update course failed: " << PQerrorMessage(conn) << std::endl;
     }
 
     PQclear(res);
@@ -124,7 +124,7 @@ bool DB::updateCourse(int courseId, std::string title, std::string description) 
 }
 
 // Добавление студента на курс
-bool DB::addStudentToCourse(int courseId, std::string userId) {
+bool DB::addStudentToCourse(int courseId, const std::string& userId) {
     ensureConnection();
 
     std::string cIdStr = std::to_string(courseId);
@@ -141,13 +141,13 @@ bool DB::addStudentToCourse(int courseId, std::string userId) {
         "ON CONFLICT (course_id, user_id) DO NOTHING";
 
     PGresult* res = PQexecParams(
-        (PGconn*)conn,
+        conn,
         sql,
         2, nullptr, paramValues, nullptr, nullptr, 0
     );
     
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        std::cerr << "Add student failed: " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "Add student failed: " << PQerrorMessage(conn) << std::endl;
         PQclear(res);
         return false;
     }
@@ -159,7 +159,7 @@ bool DB::addStudentToCourse(int courseId, std::string userId) {
 }
 
 // Удаление студента с курса
-bool DB::removeStudentFromCourse(int courseId, std::string userId) {
+bool DB::removeStudentFromCourse(int courseId, const std::string& userId) {
     ensureConnection();
 
     std::string cIdStr = std::to_string(courseId);
@@ -174,13 +174,13 @@ bool DB::removeStudentFromCourse(int courseId, std::string userId) {
         "WHERE course_id = $1 AND user_id = $2";
 
     PGresult* res = PQexecParams(
-        (PGconn*)conn,
+        conn,
         sql,
         2, nullptr, paramValues, nullptr, nullptr, 0
     );
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        std::cerr << "Remove student failed: " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "Remove student failed: " << PQerrorMessage(conn) << std::endl;
         PQclear(res);
         return false;
     }
@@ -207,13 +207,13 @@ std::vector<std::string> DB::getStudentIdsByCourseId(int courseId) {
         "WHERE c.id = $1 AND c.is_deleted = false";
 
     PGresult* res = PQexecParams(
-        (PGconn*)conn,
+        conn,
         sql,
         1, nullptr, paramValues, nullptr, nullptr, 0
     );
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        std::cerr << "Fetch students failed: " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "Fetch students failed: " << PQerrorMessage(conn) << std::endl;
         PQclear(res);
         return studentIds;
     }

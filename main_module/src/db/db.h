@@ -9,17 +9,9 @@
 #include "../domain/course.h"
 #include "../domain/question.h"
 
-// Структура оценки пользователя
 struct UserScore {
     std::string user_id;
     double score;
-};
-
-// Структура информации о пользователе
-struct UserProfileData {
-    std::vector<Course> courses;
-    std::vector<Test> tests;
-    std::vector<UserScore> grades;
 };
 
 class DB {
@@ -27,12 +19,12 @@ public:
     DB(const std::string& conninfo);
     ~DB();
 
-    // Тетсты
+    // Tests
     Test getTestById(int testId);
     bool updateTestStatus(int testId, bool isActive);
     void finalizeAllTestAttempts(int testId);
     std::vector<Test> getTestsByCourseId(int courseId);
-    int createTest(int courseId, const std::string& title, std::string authorId);
+    int createTest(int courseId, const std::string& title, const std::string& authorId);
     bool deleteTest(int testId);
     void setTestActivity(int testId, bool active);
 
@@ -40,43 +32,43 @@ public:
     bool addQuestionToTest(int testId, int questionId);
     bool reorderQuestionsInTest(int testId, const std::vector<int>& questionIds);
     std::vector<std::string> getUsersWhoPassedTest(int testId);
-    std::vector<UserScore> getTestScores(int testId, std::string userIdFilter, bool isAuthor);
-    std::vector<AttemptDetails> getTestAttemptDetails(int testId, std::string userIdFilter, bool isAuthor);
+    std::vector<UserScore> getTestScores(int testId, const std::string& userIdFilter, bool isAuthor);
+    std::vector<AttemptDetails> getTestAttemptDetails(int testId, const std::string& userIdFilter, bool isAuthor);
 
-    // Попытки
-    int startTestAttempt(int testId, std::string userId);
+    // Attempts
+    int startTestAttempt(int testId, const std::string& userId);
     bool updateAttemptAnswer(int attemptId, int questionId, int answerIndex);
-    bool isAttemptOwnedBy(int attemptId, std::string userId);
+    bool isAttemptOwnedBy(int attemptId, const std::string& userId);
     bool completeAttempt(int attemptId);
-    crow::json::wvalue getAttemptData(int testId, std::string userId);
-    crow::json::wvalue getAttemptAnswers(int testId, std::string userId);
+    crow::json::wvalue getAttemptData(int testId, const std::string& userId);
+    crow::json::wvalue getAttemptAnswers(int testId, const std::string& userId);
 
-    // Курсы
+    // Courses
     std::vector<Course> getCourses();
     Course getCourseById(int courseId);
-    int createCourse(const std::string& title, const std::string& description, std::string teacherId);
+    int createCourse(const std::string& title, const std::string& description, const std::string& teacherId);
     void deleteCourse(int courseId);
-    bool updateCourse(int courseId, std::string title, std::string description);
-    bool addStudentToCourse(int courseId, std::string userId);
-    bool removeStudentFromCourse(int courseId, std::string userId);
+    bool updateCourse(int courseId, const std::string& title, const std::string& description);
+    bool addStudentToCourse(int courseId, const std::string& userId);
+    bool removeStudentFromCourse(int courseId, const std::string& userId);
     std::vector<std::string> getStudentIdsByCourseId(int courseId);
-    bool isUserEnrolled(int courseId, std::string userId);
+    bool isUserEnrolled(int courseId, const std::string& userId);
 
-    // Вопросы
-    int createQuestion(std::string authorId, const std::string& title, const std::string& content, const std::vector<std::string>& options, int correctOption);
+    // Questions
+    int createQuestion(const std::string& authorId, const std::string& title, const std::string& content, const std::vector<std::string>& options, int correctOption);
     bool deleteQuestion(int questionId);
-    int updateQuestion(int questionId, std::string userId, const std::string& title, const std::string& content, const std::vector<std::string>& options, int correctOption);
-    std::vector<Question> getQuestionsList(std::string userId, bool canSeeAll);
+    int updateQuestion(int questionId, const std::string& userId, const std::string& title, const std::string& content, const std::vector<std::string>& options, int correctOption);
+    std::vector<Question> getQuestionsList(const std::string& userId, bool canSeeAll);
     Question getQuestionById(int questionId);
     Question getQuestionByIdAndVersion(int questionId, int version);
-    bool hasUserAttemptForQuestion(std::string userId, int questionId);
+    bool hasUserAttemptForQuestion(const std::string& userId, int questionId);
 
-    // Пользователь
-    crow::json::wvalue getUserDataProfile(std::string userId, bool includeCourses, bool includeTests, bool includeGrades);
+    // User profile
+    crow::json::wvalue getUserDataProfile(const std::string& userId, bool includeCourses, bool includeTests, bool includeGrades);
 
-    // Уведомления
-    void markNotificationsAsSent(const std::vector<int>& ids, std::string userId);
-    std::vector<crow::json::wvalue> getUnsentNotifications(std::string userId);
+    // Notifications
+    void markNotificationsAsSent(const std::vector<int>& ids, const std::string& userId);
+    std::vector<crow::json::wvalue> getUnsentNotifications(const std::string& userId);
     void pushNotification(
         const std::string& userId, 
         const std::string& type, 
@@ -84,8 +76,9 @@ public:
         const std::string& message, 
         const crow::json::wvalue& payload = {}
     );
+
 private:
     void ensureConnection();
-    void* conn;
+    PGconn* conn = nullptr;
     std::string conninfo;   
 };

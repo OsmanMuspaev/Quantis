@@ -10,7 +10,7 @@ Test DB::getTestById(int testId) {
     const char* sql = 
         "SELECT id, course_id, title, is_active, is_deleted FROM tests WHERE id = $1";
     PGresult* res = PQexecParams(
-        (PGconn*)conn,
+        conn,
         sql,
         1, nullptr, params, nullptr, nullptr, 0
     );
@@ -42,7 +42,7 @@ std::vector<Test> DB::getTestsByCourseId(int courseId) {
         "SELECT id, title FROM tests WHERE course_id = $1 AND is_deleted = false";
 
     PGresult* res = PQexecParams(
-        (PGconn*)conn, 
+        conn, 
         sql,
         1, nullptr, params, nullptr, nullptr, 0
     );
@@ -66,7 +66,7 @@ std::vector<Test> DB::getTestsByCourseId(int courseId) {
 }
 
 // Создание теста (привязанного к курсу)
-int DB::createTest(int courseId, const std::string& title, std::string authorId) {
+int DB::createTest(int courseId, const std::string& title, const std::string& authorId) {
     ensureConnection();
 
     std::string cIdStr = std::to_string(courseId);
@@ -81,7 +81,7 @@ int DB::createTest(int courseId, const std::string& title, std::string authorId)
         "VALUES ($1, $2, $3) RETURNING id";
     
     PGresult* res = PQexecParams(
-        (PGconn*)conn, 
+        conn, 
         sql, 
         3, nullptr, paramValues, nullptr, nullptr, 0);
 
@@ -89,7 +89,7 @@ int DB::createTest(int courseId, const std::string& title, std::string authorId)
     if (PQresultStatus(res) == PGRES_TUPLES_OK) {
         newId = std::stoi(PQgetvalue(res, 0, 0));
     } else {
-        std::cerr << "Create test failed: " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "Create test failed: " << PQerrorMessage(conn) << std::endl;
     }
     PQclear(res);
     return newId;
@@ -106,7 +106,7 @@ bool DB::deleteTest(int testId) {
         "UPDATE tests SET is_deleted = true WHERE id = $1";
 
     PGresult* res = PQexecParams(
-        (PGconn*)conn, 
+        conn, 
         sql, 
         1, nullptr, paramValues, nullptr, nullptr, 0
     );
@@ -126,7 +126,7 @@ bool DB::updateTestStatus(int testId, bool isActive) {
     const char* sql = 
         "UPDATE tests SET is_active = $1 WHERE id = $2 AND is_deleted = false";
     PGresult* res = PQexecParams(
-        (PGconn*)conn,
+        conn,
         sql,
         2, nullptr, params, nullptr, nullptr, 0
     );
@@ -148,15 +148,16 @@ void DB::finalizeAllTestAttempts(int testId) {
     const char* sql = 
         "UPDATE test_attempts SET status = 'completed' "
         "WHERE test_id = $1 AND status = 'in_progress'";
-    PQexecParams(
-        (PGconn*)conn,
+    PGresult* res = PQexecParams(
+        conn,
         sql,
         1, nullptr, params, nullptr, nullptr, 0
     );
+    PQclear(res);
 }
 
 // Проверка записи на курс
-bool DB::isUserEnrolled(int courseId, std::string userId) {
+bool DB::isUserEnrolled(int courseId, const std::string& userId) {
     ensureConnection();
 
     std::string cId = std::to_string(courseId);
@@ -165,7 +166,7 @@ bool DB::isUserEnrolled(int courseId, std::string userId) {
     const char* sql = 
         "SELECT 1 FROM course_students WHERE course_id = $1 AND user_id = $2";
     PGresult* res = PQexecParams(
-        (PGconn*)conn, 
+        conn, 
         sql,
         2, nullptr, params, nullptr, nullptr, 0
     );
@@ -182,7 +183,7 @@ bool DB::removeQuestionFromTest(int testId, int questionId) {
     const char* tParams[] = { tId.c_str() };
 
     const char* checkSql = "SELECT 1 FROM test_attempts WHERE test_id = $1::int LIMIT 1";
-    PGresult* checkRes = PQexecParams((PGconn*)conn, checkSql, 1, nullptr, tParams, nullptr, nullptr, 0);
+    PGresult* checkRes = PQexecParams(conn, checkSql, 1, nullptr, tParams, nullptr, nullptr, 0);
     
     if (PQresultStatus(checkRes) != PGRES_TUPLES_OK) {
         PQclear(checkRes);
@@ -202,7 +203,7 @@ bool DB::removeQuestionFromTest(int testId, int questionId) {
         "WHERE id = $1::int";
     
     const char* params[] = { tId.c_str(), qId.c_str() };
-    PGresult* res = PQexecParams((PGconn*)conn, sql, 2, nullptr, params, nullptr, nullptr, 0);
+    PGresult* res = PQexecParams(conn, sql, 2, nullptr, params, nullptr, nullptr, 0);
     
     bool success = (PQresultStatus(res) == PGRES_COMMAND_OK);
     PQclear(res);
@@ -218,10 +219,10 @@ bool DB::addQuestionToTest(int testId, int questionId) {
     const char* params[] = { tId.c_str() };
 
     const char* checkSql = "SELECT 1 FROM test_attempts WHERE test_id = $1::int LIMIT 1";
-    PGresult* checkRes = PQexecParams((PGconn*)conn, checkSql, 1, nullptr, params, nullptr, nullptr, 0);
+    PGresult* checkRes = PQexecParams(conn, checkSql, 1, nullptr, params, nullptr, nullptr, 0);
 
     if (PQresultStatus(checkRes) != PGRES_TUPLES_OK) {
-        std::cerr << "SQL Error (check): " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "SQL Error (check): " << PQerrorMessage(conn) << std::endl;
         PQclear(checkRes);
         return false; 
     }
@@ -239,7 +240,7 @@ bool DB::addQuestionToTest(int testId, int questionId) {
         "WHERE id = $1::int AND NOT ($2::int = ANY(question_ids))";
         
     const char* updateParams[] = { tId.c_str(), qId.c_str() };
-    PGresult* res = PQexecParams((PGconn*)conn, sql, 2, nullptr, updateParams, nullptr, nullptr, 0);
+    PGresult* res = PQexecParams(conn, sql, 2, nullptr, updateParams, nullptr, nullptr, 0);
 
     bool success = (PQresultStatus(res) == PGRES_COMMAND_OK);
     
@@ -255,7 +256,7 @@ bool DB::reorderQuestionsInTest(int testId, const std::vector<int>& questionIds)
     const char* tParams[] = { tId.c_str() };
 
     const char* checkSql = "SELECT 1 FROM test_attempts WHERE test_id = $1::int LIMIT 1";
-    PGresult* checkRes = PQexecParams((PGconn*)conn, checkSql, 1, nullptr, tParams, nullptr, nullptr, 0);
+    PGresult* checkRes = PQexecParams(conn, checkSql, 1, nullptr, tParams, nullptr, nullptr, 0);
     
     if (PQresultStatus(checkRes) != PGRES_TUPLES_OK) {
         PQclear(checkRes);
@@ -277,11 +278,11 @@ bool DB::reorderQuestionsInTest(int testId, const std::vector<int>& questionIds)
     const char* sql = "UPDATE tests SET question_ids = $1::int[] WHERE id = $2::int";
     const char* params[] = { arrayStr.c_str(), tId.c_str() };
     
-    PGresult* res = PQexecParams((PGconn*)conn, sql, 2, nullptr, params, nullptr, nullptr, 0);
+    PGresult* res = PQexecParams(conn, sql, 2, nullptr, params, nullptr, nullptr, 0);
     
     bool success = (PQresultStatus(res) == PGRES_COMMAND_OK);
     if (!success) {
-        std::cerr << "Reorder failed: " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "Reorder failed: " << PQerrorMessage(conn) << std::endl;
     }
 
     PQclear(res);
