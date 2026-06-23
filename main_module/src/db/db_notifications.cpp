@@ -1,7 +1,5 @@
 #include "db.h"
 
-
-// Сохранить уведомление в базе
 void DB::pushNotification(
     const std::string& userId, 
     const std::string& type, 
@@ -26,7 +24,7 @@ void DB::pushNotification(
         "VALUES ($1, $2, $3, $4, $5::jsonb)";
 
     PGresult* res = PQexecParams(
-        (PGconn*)conn,
+        static_cast<PGconn*>(conn),
         query,
         5,
         NULL,
@@ -37,14 +35,16 @@ void DB::pushNotification(
     );
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        std::cerr << "Error add notification: " << PQerrorMessage((PGconn*)conn) << std::endl;
+        std::cerr << "pushNotification error: " << PQerrorMessage(static_cast<PGconn*>(conn)) << "\n";
     }
 
     PQclear(res);
 }
-// Удалить уведомления (мягкое удаление)
+
+// Soft-deletes notifications by marking them as sent.
 void DB::markNotificationsAsSent(const std::vector<int>& ids, std::string userId) {
     if (ids.empty()) return;
+    ensureConnection();
 
     std::string pg_array = "{";
     for (size_t i = 0; i < ids.size(); ++i) {
@@ -54,22 +54,23 @@ void DB::markNotificationsAsSent(const std::vector<int>& ids, std::string userId
     pg_array += "}";
 
     const char* paramValues[2];
-    
     paramValues[0] = pg_array.c_str();
     paramValues[1] = userId.c_str();
 
     const char* sql = "UPDATE notifications SET is_sent_tg = TRUE WHERE id = ANY($1::int[]) AND user_id = $2";
 
-    PGresult* res = PQexecParams((PGconn*)conn, sql, 2, nullptr, paramValues, nullptr, nullptr, 0);
+    PGresult* res = PQexecParams(static_cast<PGconn*>(conn), sql, 2, nullptr, paramValues, nullptr, nullptr, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        CROW_LOG_ERROR << "DB Error (markNotificationsAsSent): " << PQerrorMessage((PGconn*)conn);
+        CROW_LOG_ERROR << "markNotificationsAsSent error: " << PQerrorMessage(static_cast<PGconn*>(conn));
     }
 
     PQclear(res);
 }
-// Получить список уведомлений
+
+// Fetches all unsent notifications for a user.
 std::vector<crow::json::wvalue> DB::getUnsentNotifications(std::string userId) {
+    ensureConnection();
     std::vector<crow::json::wvalue> notifications;
     
     const char* paramValues[1];
@@ -78,7 +79,7 @@ std::vector<crow::json::wvalue> DB::getUnsentNotifications(std::string userId) {
     const char* sql = "SELECT id, type, title, message, payload FROM notifications "
                       "WHERE user_id = $1 AND is_sent_tg = FALSE";
 
-    PGresult* res = PQexecParams((PGconn*)conn, sql, 1, nullptr, paramValues, nullptr, nullptr, 0);
+    PGresult* res = PQexecParams(static_cast<PGconn*>(conn), sql, 1, nullptr, paramValues, nullptr, nullptr, 0);
 
     if (PQresultStatus(res) == PGRES_TUPLES_OK) {
         int rows = PQntuples(res);

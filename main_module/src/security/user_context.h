@@ -5,7 +5,7 @@
 
 struct UserContext {
     std::string userId;
-    bool blocked;
+    bool blocked = false;
     std::unordered_set<std::string> permissions;
     std::unordered_set<std::string> roles;
 };

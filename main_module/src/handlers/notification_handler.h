@@ -11,7 +11,7 @@ inline void registerNotificationRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         crow::json::wvalue res;
@@ -24,7 +24,7 @@ inline void registerNotificationRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto body = crow::json::load(req.body);

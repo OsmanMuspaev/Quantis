@@ -11,7 +11,7 @@ inline void registerQuestionRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         PermissionRule rule{
@@ -51,7 +51,7 @@ inline void registerQuestionRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int questionId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         auto question = db.getQuestionById(questionId);
@@ -79,7 +79,7 @@ inline void registerQuestionRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int questionId) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         Question q = db.getQuestionById(questionId); 
@@ -130,7 +130,6 @@ inline void registerQuestionRoutes(crow::SimpleApp& app, DB& db) {
         );
 
         if (result == -1) return crow::response(404, "Question not found");
-        if (result == -2) return crow::response(403, "Forbidden: Not your question");
         if (result < 0) return crow::response(500, "DB Error");
 
         crow::json::wvalue res;
@@ -142,7 +141,7 @@ inline void registerQuestionRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req, int questionId, int version) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         PermissionRule rule{
@@ -170,7 +169,7 @@ inline void registerQuestionRoutes(crow::SimpleApp& app, DB& db) {
     ([&db](const crow::request& req) {
         UserContext ctx;
         auto auth = authGuard(req, ctx);
-        if (auth == 418) return crow::response(403, "Blocked");
+        if (auth == 403) return crow::response(403, "Blocked");
         if (auth == 401) return crow::response(401, "Unauthorized");
 
         PermissionRule rule{
