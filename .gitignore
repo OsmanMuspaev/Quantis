@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.o
+*.a
+
+# Environment files
+.env
+*.env.local
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Go
+telegram_module/bot_logic/go.sum
+telegram_module/telegram_client/go.sum
+
+# C++ build
+main_module/build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Debug
+*.dSYM/
