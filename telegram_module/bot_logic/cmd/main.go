@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"bot_logic/handlers"
 	"bot_logic/storage"
